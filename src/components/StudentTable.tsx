@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   useReactTable,
@@ -28,7 +29,7 @@ const initialData: Student[] = [
 
 export const StudentTable = () => {
   const [data, setData] = useState(initialData);
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
   const [columnSizes, setColumnSizes] = useState<{ [key: string]: number }>({});
 
@@ -96,7 +97,7 @@ export const StudentTable = () => {
           className="expand-button"
           onClick={() => toggleRowExpansion(row.original.id)}
         >
-          {expandedRows.has(row.original.id) ? '▼' : '▶'}
+          {expandedRowId === row.original.id ? '▼' : '▶'}
         </button>
       ),
     },
@@ -109,13 +110,7 @@ export const StudentTable = () => {
   };
 
   const toggleRowExpansion = (id: number) => {
-    const newExpandedRows = new Set(expandedRows);
-    if (expandedRows.has(id)) {
-      newExpandedRows.delete(id);
-    } else {
-      newExpandedRows.add(id);
-    }
-    setExpandedRows(newExpandedRows);
+    setExpandedRowId(expandedRowId === id ? null : id);
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -223,7 +218,7 @@ export const StudentTable = () => {
                   </td>
                 ))}
               </tr>
-              {expandedRows.has(row.original.id) && (
+              {expandedRowId === row.original.id && (
                 <tr>
                   <td colSpan={columns.length} className="expanded-content">
                     {row.original.details}
