@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   useReactTable,
@@ -119,8 +118,25 @@ export const StudentTable = () => {
     setExpandedRows(newExpandedRows);
   };
 
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedRowIndex(index);
+    
+    // Create a drag image of the entire row
+    const row = e.currentTarget.closest('tr');
+    if (row) {
+      const dragImage = row.cloneNode(true) as HTMLElement;
+      dragImage.style.opacity = '0.5';
+      dragImage.style.position = 'absolute';
+      dragImage.style.top = '-1000px';
+      document.body.appendChild(dragImage);
+      
+      e.dataTransfer.setDragImage(dragImage, 0, 0);
+      
+      // Remove the cloned element after drag starts
+      setTimeout(() => {
+        document.body.removeChild(dragImage);
+      }, 0);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -199,7 +215,7 @@ export const StudentTable = () => {
                   <td 
                     key={cell.id}
                     draggable={cellIndex === 0}
-                    onDragStart={cellIndex === 0 ? () => handleDragStart(index) : undefined}
+                    onDragStart={cellIndex === 0 ? (e) => handleDragStart(e, index) : undefined}
                     onDragOver={handleDragOver}
                     onDrop={() => handleDrop(index)}
                   >
