@@ -144,18 +144,18 @@ export const StudentTable = () => {
     columnResizeMode: 'onChange',
   });
 
-  const handleResizeMouseDown = (e: React.MouseEvent, column: Column<Student>) => {
+  const handleResizeMouseDown = (e: React.MouseEvent, header: any) => {
     e.preventDefault();
     const startX = e.pageX;
-    const startWidth = column.getSize();
+    const startWidth = header.getSize();
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const width = Math.max(startWidth + (moveEvent.pageX - startX), 50);
       setColumnSizes(prev => ({
         ...prev,
-        [column.id]: width,
+        [header.id]: width,
       }));
-      column.setSize(width);
+      header.column.size = width;
     };
 
     const handleMouseUp = () => {
@@ -169,7 +169,7 @@ export const StudentTable = () => {
 
   return (
     <div className="table-container">
-      <table className="table" style={{ width: table.getTotalSize() }}>
+      <table className="table">
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>
@@ -179,12 +179,10 @@ export const StudentTable = () => {
                   style={{ width: header.getSize() }}
                 >
                   {flexRender(header.column.columnDef.header, header.getContext())}
-                  {header.column.getCanResize() && (
-                    <div
-                      className="resizer"
-                      onMouseDown={(e) => handleResizeMouseDown(e, header.column)}
-                    />
-                  )}
+                  <div
+                    className="resizer"
+                    onMouseDown={(e) => handleResizeMouseDown(e, header)}
+                  />
                 </th>
               ))}
             </tr>
@@ -194,6 +192,7 @@ export const StudentTable = () => {
           {table.getRowModel().rows.map((row, index) => (
             <React.Fragment key={row.original.id}>
               <tr
+                draggable={false}
                 className={draggedRowIndex === index ? 'dragging' : ''}
               >
                 {row.getVisibleCells().map((cell, cellIndex) => (
