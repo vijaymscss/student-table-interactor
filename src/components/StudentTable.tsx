@@ -5,7 +5,9 @@ import {
   getCoreRowModel,
   flexRender,
   ColumnDef,
+  Column,
 } from '@tanstack/react-table';
+import { Move } from 'lucide-react';
 import '../styles/table.css';
 
 interface Student {
@@ -29,23 +31,38 @@ export const StudentTable = () => {
   const [data, setData] = useState(initialData);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
+  const [columnSizes, setColumnSizes] = useState<{ [key: string]: number }>({});
 
   const columns: ColumnDef<Student>[] = [
     {
+      id: 'drag',
+      header: '',
+      size: 40,
+      cell: () => (
+        <div className="drag-handle">
+          <Move size={20} />
+        </div>
+      ),
+    },
+    {
       accessorKey: 'name',
       header: 'Name',
+      size: columnSizes['name'] || 200,
     },
     {
       accessorKey: 'age',
       header: 'Age',
+      size: columnSizes['age'] || 100,
     },
     {
       accessorKey: 'mobile',
       header: 'Mobile No',
+      size: columnSizes['mobile'] || 150,
     },
     {
       accessorKey: 'gender',
       header: 'Gender',
+      size: columnSizes['gender'] || 200,
       cell: ({ row }) => (
         <div className="radio-group">
           <label className="radio-label">
@@ -74,6 +91,7 @@ export const StudentTable = () => {
     {
       id: 'expand',
       header: '',
+      size: 50,
       cell: ({ row }) => (
         <button
           className="expand-button"
@@ -105,14 +123,8 @@ export const StudentTable = () => {
     setDraggedRowIndex(index);
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    const dragged = document.querySelector('.dragging');
-    if (dragged) {
-      const row = e.currentTarget as HTMLElement;
-      const bounding = row.getBoundingClientRect();
-      const offset = e.clientY - bounding.top;
-    }
   };
 
   const handleDrop = (targetIndex: number) => {
@@ -129,15 +141,21 @@ export const StudentTable = () => {
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    columnResizeMode: 'onChange',
   });
 
-  const handleResizeMouseDown = (e: React.MouseEvent, header: any) => {
+  const handleResizeMouseDown = (e: React.MouseEvent, column: Column<Student>) => {
+    e.preventDefault();
     const startX = e.pageX;
-    const startWidth = header.getSize();
+    const startWidth = column.getSize();
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const newWidth = Math.max(startWidth + (moveEvent.pageX - startX), 50);
-      header.column.setSize(newWidth);
+      const width = Math.max(startWidth + (moveEvent.pageX - startX), 50);
+      setColumnSizes(prev => ({
+        ...prev,
+        [column.id]: width,
+      }));
+      column.setSize(width);
     };
 
     const handleMouseUp = () => {
@@ -151,7 +169,7 @@ export const StudentTable = () => {
 
   return (
     <div className="table-container">
-      <table className="table">
+      <table className="table" style={{ width: table.getTotalSize() }}>
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>
@@ -161,10 +179,12 @@ export const StudentTable = () => {
                   style={{ width: header.getSize() }}
                 >
                   {flexRender(header.column.columnDef.header, header.getContext())}
-                  <div
-                    className="resizer"
-                    onMouseDown={e => handleResizeMouseDown(e, header)}
-                  />
+                  {header.column.getCanResize() && (
+                    <div
+                      className="resizer"
+                      onMouseDown={(e) => handleResizeMouseDown(e, header.column)}
+                    />
+                  )}
                 </th>
               ))}
             </tr>
@@ -174,14 +194,16 @@ export const StudentTable = () => {
           {table.getRowModel().rows.map((row, index) => (
             <React.Fragment key={row.original.id}>
               <tr
-                draggable
-                onDragStart={() => handleDragStart(index)}
-                onDragOver={e => handleDragOver(e, index)}
-                onDrop={() => handleDrop(index)}
                 className={draggedRowIndex === index ? 'dragging' : ''}
               >
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id}>
+                {row.getVisibleCells().map((cell, cellIndex) => (
+                  <td 
+                    key={cell.id}
+                    draggable={cellIndex === 0}
+                    onDragStart={cellIndex === 0 ? () => handleDragStart(index) : undefined}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(index)}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
